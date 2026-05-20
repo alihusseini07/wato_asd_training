@@ -1,3 +1,4 @@
-# planner_node:
-#   ros__parameters:
-    
+planner_node:
+  ros__parameters:
+    goal_tolerance: 0.5      # meters; goal considered reached within this
+    obstacle_threshold: 50   # grid value above which a cell is blocked
