@@ -142,7 +142,10 @@ bool PlannerNode::runAStar(double sx, double sy, double gx, double gy,
       if (blocked(nx, ny)) continue;
       CellIndex nb(nx, ny);
       if (closed.count(nb)) continue;
-      double step = (dx8[k] == 0 || dy8[k] == 0) ? 1.0 : 1.41421356;
+      double base = (dx8[k] == 0 || dy8[k] == 0) ? 1.0 : 1.41421356;
+      int8_t cell_val = data[ny * w + nx];
+      double cell_cost = (cell_val < 0) ? 0.0 : static_cast<double>(cell_val);
+      double step = base * (1.0 + cost_weight_ * (cell_cost / 100.0));
       double tentative = g_score[cur.index] + step;
       auto it = g_score.find(nb);
       if (it == g_score.end() || tentative < it->second) {
@@ -181,10 +184,17 @@ void PlannerNode::planPath() {
   }
 
   std::vector<std::pair<double, double>> waypoints;
-  if (!runAStar(robot_x_, robot_y_, goal_.point.x, goal_.point.y, waypoints)) {
-    RCLCPP_WARN(this->get_logger(), "A* failed to find a path; halting robot");
-    // Publish an empty path so the controller stops instead of following a
-    // stale path into an obstacle.
+  bool ok = runAStar(robot_x_, robot_y_, goal_.point.x, goal_.point.y,
+                     obstacle_threshold_, waypoints);
+  if (!ok) {
+    // Robot may be wedged in inflation zone — retry ignoring inflation, only
+    // avoiding true obstacles so it can escape and replan.
+    ok = runAStar(robot_x_, robot_y_, goal_.point.x, goal_.point.y,
+                  lethal_threshold_, waypoints);
+    if (ok) RCLCPP_WARN(this->get_logger(), "Using recovery path (reduced clearance)");
+  }
+  if (!ok) {
+    RCLCPP_WARN(this->get_logger(), "A* failed; halting robot");
     nav_msgs::msg::Path empty;
     empty.header.stamp = this->get_clock()->now();
     empty.header.frame_id = current_map_.header.frame_id;
