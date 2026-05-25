@@ -11,7 +11,9 @@
 PlannerNode::PlannerNode()
     : Node("planner"), planner_(robot::PlannerCore(this->get_logger())) {
   goal_tolerance_ = this->declare_parameter<double>("goal_tolerance", 0.5);
-  obstacle_threshold_ = this->declare_parameter<int>("obstacle_threshold", 50);
+  obstacle_threshold_ = this->declare_parameter<int>("obstacle_threshold", 30);
+  lethal_threshold_ = this->declare_parameter<int>("lethal_threshold", 80);
+  cost_weight_ = this->declare_parameter<double>("cost_weight", 5.0);
 
   map_sub_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
       "/map", 10,
@@ -92,6 +94,7 @@ void PlannerNode::timerCallback() {
 }
 
 bool PlannerNode::runAStar(double sx, double sy, double gx, double gy,
+                           int block_threshold,
                            std::vector<std::pair<double, double>>& path_out) {
   int start_x, start_y, goal_x, goal_y;
   if (!worldToGrid(sx, sy, start_x, start_y)) return false;
@@ -103,7 +106,7 @@ bool PlannerNode::runAStar(double sx, double sy, double gx, double gy,
 
   auto blocked = [&](int x, int y) {
     int8_t v = data[y * w + x];
-    return v > obstacle_threshold_;  // unknown (-1) is treated as free
+    return v > block_threshold;  // unknown (-1) is treated as free
   };
 
   CellIndex start(start_x, start_y);

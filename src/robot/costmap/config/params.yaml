@@ -2,5 +2,5 @@ costmap_node:
   ros__parameters:
     resolution: 0.1        # meters per cell
     size: 200              # grid is size x size cells (20m x 20m)
-    inflation_radius: 1.0  # meters
+    inflation_radius: 2.0  # meters
     max_cost: 100          # cost of an occupied cell

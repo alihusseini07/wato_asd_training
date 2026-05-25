@@ -59,6 +59,7 @@ class PlannerNode : public rclcpp::Node {
     void planPath();
     // A* on current_map_. Returns world-frame waypoints (empty on failure).
     bool runAStar(double sx, double sy, double gx, double gy,
+                  int block_threshold,
                   std::vector<std::pair<double, double>>& path_out);
 
     // World <-> grid helpers using current_map_ metadata.
@@ -82,7 +83,9 @@ class PlannerNode : public rclcpp::Node {
     bool map_received_ = false;
 
     double goal_tolerance_;
-    int obstacle_threshold_;  // grid value above which a cell is blocked
+    int obstacle_threshold_;  // primary threshold — enforces clearance
+    int lethal_threshold_;    // fallback threshold — only true obstacles
+    double cost_weight_;      // step-cost penalty for near-obstacle cells
 };
 
 #endif

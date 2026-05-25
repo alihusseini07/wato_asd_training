@@ -1,4 +1,6 @@
 planner_node:
   ros__parameters:
     goal_tolerance: 0.5      # meters; goal considered reached within this
-    obstacle_threshold: 50   # grid value above which a cell is blocked
+    obstacle_threshold: 30   # preferred clearance (~1.4m from obstacles)
+    lethal_threshold: 80     # recovery fallback — only true obstacles block
+    cost_weight: 5.0         # A* step penalty for near-obstacle cells
