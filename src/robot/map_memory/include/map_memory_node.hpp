@@ -33,15 +33,10 @@ class MapMemoryNode : public rclcpp::Node {
     double robot_y_ = 0.0;
     double robot_yaw_ = 0.0;
 
-    // Movement tracking for update gating.
-    double last_x_ = 0.0;
-    double last_y_ = 0.0;
     bool first_odom_ = true;
     bool costmap_received_ = false;
-    bool should_update_ = false;
 
     // Parameters.
-    double update_distance_;  // meters of travel before fusing
     double resolution_;
     int width_;
     int height_;

@@ -6,7 +6,6 @@
 
 MapMemoryNode::MapMemoryNode()
     : Node("map_memory"), map_memory_(robot::MapMemoryCore(this->get_logger())) {
-  update_distance_ = this->declare_parameter<double>("update_distance", 1.5);
   resolution_ = this->declare_parameter<double>("resolution", 0.1);
   width_ = this->declare_parameter<int>("width", 400);    // 400 * 0.1 = 40m
   height_ = this->declare_parameter<int>("height", 400);
@@ -44,6 +43,9 @@ void MapMemoryNode::costmapCallback(
     const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
   latest_costmap_ = *msg;
   costmap_received_ = true;
+  if (!first_odom_) {
+    integrateCostmap();
+  }
 }
 
 void MapMemoryNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -59,18 +61,7 @@ void MapMemoryNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
   global_map_.header.frame_id = msg->header.frame_id;
 
   if (first_odom_) {
-    last_x_ = robot_x_;
-    last_y_ = robot_y_;
     first_odom_ = false;
-    should_update_ = true;  // force a first fuse once a costmap arrives
-    return;
-  }
-
-  double dist = std::hypot(robot_x_ - last_x_, robot_y_ - last_y_);
-  if (dist >= update_distance_) {
-    last_x_ = robot_x_;
-    last_y_ = robot_y_;
-    should_update_ = true;
   }
 }
 
@@ -111,12 +102,6 @@ void MapMemoryNode::integrateCostmap() {
 }
 
 void MapMemoryNode::updateMap() {
-  if (should_update_ && costmap_received_) {
-    integrateCostmap();
-    should_update_ = false;
-  }
-  // Always publish so the planner keeps receiving the map (incl. the initial
-  // empty map before the robot has moved).
   global_map_.header.stamp = this->get_clock()->now();
   map_pub_->publish(global_map_);
 }
