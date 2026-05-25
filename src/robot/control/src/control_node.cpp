@@ -64,6 +64,15 @@ geometry_msgs::msg::Twist ControlNode::computeVelocity(
   double ld = std::hypot(x_local, y_local);
   if (ld < 1e-6) return cmd;  // on top of target
 
+  // Target is behind: spin in place toward it instead of driving away.
+  if (x_local < 0.0) {
+    cmd.linear.x = 0.0;
+    cmd.angular.z = std::clamp(
+        (y_local >= 0.0 ? 1.0 : -1.0) * max_angular_speed_,
+        -max_angular_speed_, max_angular_speed_);
+    return cmd;
+  }
+
   // Pure pursuit curvature.
   double curvature = 2.0 * y_local / (ld * ld);
   double angular = linear_speed_ * curvature;

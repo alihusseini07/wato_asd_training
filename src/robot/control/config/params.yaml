@@ -1,6 +1,6 @@
 control_node:
   ros__parameters:
-    lookahead_distance: 0.5  # meters ahead to chase on the path
+    lookahead_distance: 1.0  # meters ahead to chase on the path
     goal_tolerance: 0.3      # meters; stop within this of the final waypoint
-    linear_speed: 0.5        # constant forward speed (m/s)
+    linear_speed: 1.0      # constant forward speed (m/s)
     max_angular_speed: 1.0   # cap on angular velocity (rad/s)
